@@ -1,9 +1,28 @@
 import datetime
 from datetime import date, timedelta
+import os
 import re
+
 from todoist.api import TodoistAPI
 
-api = TodoistAPI("")
+
+class MissingApiKeyError(Exception):
+    pass
+
+
+def get_api_key() -> str:
+    env_api_key = os.environ.get('API_KEY')
+    if env_api_key is not None:
+        return env_api_key
+    else:
+        raise MissingApiKeyError("API_KEY not found in environment")
+
+
+api_key = get_api_key()
+api = TodoistAPI(api_key)
+
+# It is necessary to get all of the tasks and check all their due dates,
+# otherwise the logic may overload a day with too many tasks
 due_dates = {}
 
 
