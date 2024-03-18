@@ -1,28 +1,40 @@
 import os
 import re
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+from typing import Any, List
 from zoneinfo import ZoneInfo
 
 from todoist_api_python.api import TodoistAPI
+from todoist_api_python.models import Task
 
 TASKS_PER_DAY = 5
 
 USER_TZ = os.environ.get('USER_TZ', 'America/New_York')
-api_key = os.environ['TODOIST_API_KEY']
+api_key = os.environ.get('TODOIST_API_KEY', '')
 api = TodoistAPI(api_key)
 
 
-def get_number_tasks_for(next_day):
-  tasks = api.get_tasks(filter='due on ' + next_day.strftime('%m/%d/%Y'))
+def sort_tasks(list: List[Task]):
+    list.sort(key=lambda t: (-t.priority, t.due.date if t.due else None))
+
+
+def get_tasks_for(day: date) -> List[Task]:
+  return api.get_tasks(filter='due on ' + day.strftime('%m/%d/%Y'))
+
+
+def get_number_tasks_for(day: date) -> int:
+  tasks = get_tasks_for(day)
   return len(tasks)
   
 
-# TODO: refactor to not be globals?
-next_day = datetime.now(ZoneInfo(USER_TZ)).date()
-tasks_on_next_day = get_number_tasks_for(next_day)
+def reschedule_to(task: Task, date: date):
 
+  if task.due.date == date.strftime('%Y-%m-%d'):
+    return
 
-def reschedule_to(task, date):
+  # TODO: use a logging framework?
+  print(f"Sending the task {task.content} to {date}")
+  
   due_date = task.due.string
 
   due_date = re.sub(r'\bstarting on\b.*', '', due_date)
@@ -50,13 +62,56 @@ def reschedule_to_next_free_day(task):
   tasks_on_next_day = get_number_tasks_for(next_day)
 
 
+def slice_list(lst, num_items):
+    return lst[:num_items], lst[num_items:]
+  
+def schedule_and_push_down(tasks_to_add: List[Task], day: date = None):
+
+  if not tasks_to_add:
+    return
+
+  if day is None:
+    day = datetime.now(ZoneInfo(USER_TZ)).date() # Today
+
+  # query all the tasks for this day
+
+  tasks = get_tasks_for(day)
+
+  # filter tasks to have only repeating tasks with the '!'
+  tasks = [t for t in tasks if t.due.is_recurring and '!' in t.due.string]
+  
+  tasks.extend(tasks_to_add)
+  
+  # Sort tasks by priority and by days late
+  sort_tasks(tasks)
+
+  tasks_for_this_day, tasks_for_later = slice_list(tasks, TASKS_PER_DAY)
+
+  # assign tasks to this day
+
+  for task in tasks_for_this_day:
+    reschedule_to(task, day)
+
+  # recursively call self with rest of the tasks
+
+  schedule_and_push_down(tasks_for_later, day + timedelta(days=+1))
+  
+
+
 # Get all overdue tasks
 
 try:
-  tasks = api.get_tasks(filter='overdue')
+  # TODO: refactor to not be globals?
+  next_day = datetime.now(ZoneInfo(USER_TZ)).date()
+  tasks_on_next_day = get_number_tasks_for(next_day)
 
-  for task in tasks:
-    reschedule_to_next_free_day(task)
+  overdue_tasks = api.get_tasks(filter='overdue')
+
+  if True:
+    schedule_and_push_down(overdue_tasks)
+  else:
+    for task in overdue_tasks:
+      reschedule_to_next_free_day(task)
 
 except Exception as e:
   print(e)
