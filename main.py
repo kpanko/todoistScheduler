@@ -1,7 +1,7 @@
 import os
 import re
 from datetime import date, datetime, timedelta
-from typing import Any, List
+from typing import List
 from zoneinfo import ZoneInfo
 
 from todoist_api_python.api import TodoistAPI
@@ -21,11 +21,6 @@ def sort_tasks(list: List[Task]):
 def get_tasks_for(day: date) -> List[Task]:
   return api.get_tasks(filter='due on ' + day.strftime('%m/%d/%Y'))
 
-
-def get_number_tasks_for(day: date) -> int:
-  tasks = get_tasks_for(day)
-  return len(tasks)
-  
 
 def reschedule_to(task: Task, date: date):
 
@@ -49,18 +44,6 @@ def reschedule_to(task: Task, date: date):
   if not is_success:
     raise Exception("Failed to reschedule task")
   
-
-def reschedule_to_next_free_day(task):
-  global next_day, tasks_on_next_day
-
-  # check if the next day has too many tasks
-  while tasks_on_next_day >= TASKS_PER_DAY:
-    next_day += timedelta(days=+1)
-    tasks_on_next_day = get_number_tasks_for(next_day)
-
-  reschedule_to(task, next_day)
-  tasks_on_next_day = get_number_tasks_for(next_day)
-
 
 def slice_list(lst, num_items):
     return lst[:num_items], lst[num_items:]
@@ -97,21 +80,11 @@ def schedule_and_push_down(tasks_to_add: List[Task], day: date = None):
   schedule_and_push_down(tasks_for_later, day + timedelta(days=+1))
   
 
-
-# Get all overdue tasks
-
 try:
-  # TODO: refactor to not be globals?
-  next_day = datetime.now(ZoneInfo(USER_TZ)).date()
-  tasks_on_next_day = get_number_tasks_for(next_day)
-
+  # Get all overdue tasks
   overdue_tasks = api.get_tasks(filter='overdue')
 
-  if True:
-    schedule_and_push_down(overdue_tasks)
-  else:
-    for task in overdue_tasks:
-      reschedule_to_next_free_day(task)
+  schedule_and_push_down(overdue_tasks)
 
 except Exception as e:
   print(e)
