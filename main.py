@@ -15,7 +15,11 @@ api = TodoistAPI(api_key)
 
 
 def sort_tasks(list: List[Task]):
-    list.sort(key=lambda t: (-t.priority, t.due.date if t.due else None))
+    list.sort(key=lambda t: (
+      '!' in t.due.string if t.due else True,
+      -t.priority,
+      t.due.date if t.due else None
+      ))
 
 
 def get_tasks_for(day: date) -> List[Task]:
@@ -35,7 +39,7 @@ def reschedule_to(task: Task, date: date):
   due_date = re.sub(r'\bstarting on\b.*', '', due_date)
   
   if task.due.is_recurring:
-    due_string = f"{due_date}starting on " + date.strftime('%m/%d/%Y')
+    due_string = f"{due_date} starting on " + date.strftime('%m/%d/%Y')
   else:
     due_string = date.strftime('%m/%d/%Y')
     
