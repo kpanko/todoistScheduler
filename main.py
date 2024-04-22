@@ -108,7 +108,7 @@ logging.basicConfig(level=logging.DEBUG)
 try:
   # Get all overdue tasks
   logging.info("Getting overdue tasks")
-  overdue_tasks = api.get_tasks(filter='overdue')
+  overdue_tasks = api.get_tasks(filter='overdue & ! p1')
 
   schedule_and_push_down(overdue_tasks)
 
