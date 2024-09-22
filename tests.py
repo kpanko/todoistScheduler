@@ -5,7 +5,10 @@ from typing import List
 from todoist_api_python.models import Task, Due
 
 # TODO: consider making a module or class or whatever
-from main import sort_tasks
+from main import (
+    slice_list,
+    sort_tasks,
+)
 
 def create_blank_task():
     
@@ -137,6 +140,27 @@ class TestTaskSort(unittest.TestCase):
         
         self.assertEqual(list, expected,
                          "Could not sort tasks without ! to front")
+
+                         
+class TestFunctions(unittest.TestCase):
+
+    def test_slice_normally(self):
+        
+        list = [1, 2, 5, 10]
+        
+        result1, result2 = slice_list(list, 3)
+        
+        self.assertEqual(result1, [1, 2, 5])
+        self.assertEqual(result2, [10])
+    
+    def test_slice_with_negative_amount(self):
+        
+        list = [1, 2, 5]
+        
+        result1, result2 = slice_list(list, -1)
+
+        self.assertEqual(result1, [])
+        self.assertEqual(result2, list)
 
 
 if __name__ == '__main__':

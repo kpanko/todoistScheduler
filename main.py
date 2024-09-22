@@ -15,6 +15,8 @@ api_key = os.environ.get('TODOIST_API_KEY', '')
 api = TodoistAPI(api_key)
 
 
+# TODO: I think the ! is going missing and todoist isn't preserving it;
+# instead of this, use a tag like @not_reschedule for daily repeating tasks
 def sort_tasks(list: List[Task]):
     list.sort(key=lambda t: (
       '!' in t.due.string if t.due else True,
@@ -52,7 +54,10 @@ def reschedule_to(task: Task, date: date):
   
 
 def slice_list(lst, num_items):
-    return lst[:num_items], lst[num_items:]
+    if num_items >= 0:
+      return lst[:num_items], lst[num_items:]
+    else:
+      return [], lst
   
 def schedule_and_push_down(
   tasks_to_add: List[Task],
@@ -75,6 +80,8 @@ def schedule_and_push_down(
   logging.debug("Getting tasks for %s", day)
   tasks = get_tasks_for(day)
 
+  num_this_day = len(tasks)
+
   logging.debug("Found %d tasks", len(tasks))
   for task in tasks:
     logging.debug(task)
@@ -82,14 +89,16 @@ def schedule_and_push_down(
   # filter tasks to have only repeating tasks with the '!'
   tasks = [t for t in tasks if t.due.is_recurring and '!' in t.due.string]
 
+  num_this_day = num_this_day - len(tasks)
+
   logging.debug("After filter there are now %d tasks", len(tasks))
   
   tasks.extend(tasks_to_add)
-  
+
   # Sort tasks by priority and by days late
   sort_tasks(tasks)
 
-  tasks_for_this_day, tasks_for_later = slice_list(tasks, TASKS_PER_DAY)
+  tasks_for_this_day, tasks_for_later = slice_list(tasks, TASKS_PER_DAY-num_this_day)
 
   # assign tasks to this day
 
