@@ -9,17 +9,15 @@ from todoist_api_python.api import TodoistAPI
 from todoist_api_python.models import Task
 
 TASKS_PER_DAY = 5
+IGNORE_TASK_TAG = 'no_reschedule'
 
 USER_TZ = os.environ.get('USER_TZ', 'America/New_York')
 api_key = os.environ.get('TODOIST_API_KEY', '')
 api = TodoistAPI(api_key)
 
 
-# TODO: I think the ! is going missing and todoist isn't preserving it;
-# instead of this, use a tag like @not_reschedule for daily repeating tasks
 def sort_tasks(list: List[Task]):
     list.sort(key=lambda t: (
-      '!' in t.due.string if t.due else True,
       -t.priority,
       t.due.date if t.due else None
       ))
@@ -86,13 +84,8 @@ def schedule_and_push_down(
   for task in tasks:
     logging.debug(task)
 
-  # filter tasks to have only repeating tasks with the '!'
-  tasks = [t for t in tasks if t.due.is_recurring and '!' in t.due.string]
-
   num_this_day = num_this_day - len(tasks)
 
-  logging.debug("After filter there are now %d tasks", len(tasks))
-  
   tasks.extend(tasks_to_add)
 
   # Sort tasks by priority and by days late
@@ -117,7 +110,7 @@ logging.basicConfig(level=logging.DEBUG)
 try:
   # Get all overdue tasks
   logging.info("Getting overdue tasks")
-  overdue_tasks = api.get_tasks(filter='overdue & ! p1')
+  overdue_tasks = api.get_tasks(filter=f'overdue & ! p1 & ! @{IGNORE_TASK_TAG}')
 
   schedule_and_push_down(overdue_tasks)
 

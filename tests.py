@@ -124,24 +124,7 @@ class TestTaskSort(unittest.TestCase):
         self.assertEqual(list, expected,
                          "Could not sort task with None due date")
 
-    def test_sort_bang_goes_last(self):
-        
-        daily_task = create_blank_task()
-        daily_task.due.string = 'every day'
 
-        repeating_task = create_blank_task()
-        repeating_task.due.string = 'every! three weeks'
-        
-        list = [repeating_task, daily_task]
-        
-        sort_tasks(list)
-        
-        expected = [daily_task, repeating_task]
-        
-        self.assertEqual(list, expected,
-                         "Could not sort tasks without ! to front")
-
-                         
 class TestFunctions(unittest.TestCase):
 
     def test_slice_normally(self):
