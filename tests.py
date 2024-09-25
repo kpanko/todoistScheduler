@@ -1,6 +1,6 @@
 import unittest
 
-from typing import List
+from typing import cast, List
 
 from todoist_api_python.models import Task, Due
 
@@ -69,10 +69,10 @@ class TestTaskSort(unittest.TestCase):
     def test_sort_by_due_date(self):
         
         old_task = create_blank_task()
-        old_task.due.date = '2024-02-29'
+        cast(Due, old_task.due).date = '2024-02-29'
 
         new_task = create_blank_task()
-        new_task.due.date = '2024-03-14'
+        cast(Due, new_task.due).date = '2024-03-14'
 
         list = [new_task, old_task]
 
@@ -87,19 +87,19 @@ class TestTaskSort(unittest.TestCase):
 
         urgent_old_task = create_blank_task()
         urgent_old_task.priority = 4
-        urgent_old_task.due.date = '2024-02-29'
+        cast(Due, urgent_old_task.due).date = '2024-02-29'
 
         urgent_new_task = create_blank_task()
         urgent_new_task.priority = 4
-        urgent_new_task.due.date = '2024-03-14'
+        cast(Due, urgent_new_task.due).date = '2024-03-14'
         
         low_old_task = create_blank_task()
         low_old_task.priority = 1
-        low_old_task.due.date = '1980-01-01'
+        cast(Due, low_old_task.due).date = '1980-01-01'
 
         low_new_task = create_blank_task()
         low_new_task.priority = 1
-        low_new_task.due.date = '2024-03-20'
+        cast(Due, low_new_task.due).date = '2024-03-20'
 
         list = [low_old_task, low_new_task, urgent_new_task, urgent_old_task]
 

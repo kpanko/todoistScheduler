@@ -2,7 +2,7 @@ import os
 import re
 from datetime import date, datetime, timedelta
 import logging
-from typing import List
+from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 from todoist_api_python.api import TodoistAPI
@@ -28,6 +28,10 @@ def get_tasks_for(day: date) -> List[Task]:
 
 
 def reschedule_to(task: Task, date: date):
+
+  if task.due is None:
+    # This logic only deals with overdue tasks but Pylance does not know this
+    return
 
   if task.due.date == date.strftime('%Y-%m-%d'):
     return
@@ -59,7 +63,7 @@ def slice_list(lst, num_items):
   
 def schedule_and_push_down(
   tasks_to_add: List[Task],
-  day: date = None,
+  day: Optional[date] = None,
   depth: int = 0):
 
   logging.debug("Called schedule_and_push_down with depth %d", depth)
