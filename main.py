@@ -15,6 +15,7 @@ USER_TZ = os.environ.get('USER_TZ', 'America/New_York')
 api_key = os.environ.get('TODOIST_API_KEY', '')
 api = TodoistAPI(api_key)
 
+today = datetime.now(ZoneInfo(USER_TZ)).date()
 
 def sort_tasks(list: List[Task]):
     list.sort(key=lambda t: (
@@ -24,7 +25,8 @@ def sort_tasks(list: List[Task]):
 
 
 def get_tasks_for(day: date) -> List[Task]:
-  return api.get_tasks(filter='due on ' + day.strftime('%m/%d/%Y'))
+  return api.get_tasks(
+    filter=f'! p1 & ! @{IGNORE_TASK_TAG} & due on ' + day.strftime('%m/%d/%Y'))
 
 
 def reschedule_to(task: Task, date: date):
@@ -75,7 +77,7 @@ def schedule_and_push_down(
     return
 
   if day is None:
-    day = datetime.now(ZoneInfo(USER_TZ)).date() # Today
+    day = today
 
   # query all the tasks for this day
 
@@ -90,12 +92,15 @@ def schedule_and_push_down(
 
   num_this_day = num_this_day - len(tasks)
 
-  tasks.extend(tasks_to_add)
+  existing_task_ids = {task.id for task in tasks}
+
+  tasks.extend([t for t in tasks_to_add if t.id not in existing_task_ids])
 
   # Sort tasks by priority and by days late
   sort_tasks(tasks)
 
-  tasks_for_this_day, tasks_for_later = slice_list(tasks, TASKS_PER_DAY-num_this_day)
+  tasks_for_this_day, tasks_for_later = slice_list(
+    tasks, TASKS_PER_DAY-num_this_day)
 
   # assign tasks to this day
 
@@ -114,7 +119,18 @@ logging.basicConfig(level=logging.DEBUG)
 try:
   # Get all overdue tasks
   logging.info("Getting overdue tasks")
-  overdue_tasks = api.get_tasks(filter=f'overdue & ! p1 & ! @{IGNORE_TASK_TAG}')
+
+  overdue_tasks = api.get_tasks(
+    filter=f'overdue & ! p1 & ! @{IGNORE_TASK_TAG}')
+
+  # filter out tasks that are due today because Todoist has a weird idea
+  # about what overdue means
+
+  today_str = today.strftime("%Y-%m-%d")
+  
+  overdue_tasks = [t for t in overdue_tasks if
+                   t.due is not None and
+                   t.due.date != today_str]
 
   schedule_and_push_down(overdue_tasks)
 
