@@ -30,4 +30,4 @@ jobs:
 
       - name: Run nightly script
         run: |
-          poetry run python scripts/myscript.py
+          poetry run python main.py
