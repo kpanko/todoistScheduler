@@ -1,13 +1,16 @@
 name: nightly-run
+
 on:
   schedule:
     - cron: '30 21 * * *'    # 21:30 UTC daily
   workflow_dispatch:         # allow manual runs too
+
 jobs:
   run-script:
     runs-on: ubuntu-latest
     env:
       TODOIST_API_KEY: ${{ secrets.TODOIST_API_KEY }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -16,13 +19,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install Poetry
         run: |
-          python -m venv .venv
-          . .venv/bin/activate
-          pip install -r requirements.txt
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies with Poetry
+        run: |
+          poetry install --no-root --no-interaction --no-ansi
 
       - name: Run nightly script
         run: |
-          . .venv/bin/activate
-          python scripts/main.py
+          poetry run python scripts/myscript.py
