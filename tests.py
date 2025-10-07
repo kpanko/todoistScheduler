@@ -11,6 +11,7 @@ from scheduler import (
     schedule_and_push_down,
 )
 
+# A sentinel object to detect if a keyword argument was provided
 _SENTINEL = object()
 
 # A more flexible task creator
