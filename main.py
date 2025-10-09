@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 from todoist_api_python.api import TodoistAPI
 
 import config
-import scheduler
+from scheduler import Scheduler
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -14,6 +14,13 @@ def main():
     """Main function to run the Todoist scheduler."""
     api = TodoistAPI(config.TODOIST_API_KEY)
     today = datetime.now(ZoneInfo(config.USER_TZ)).date()
+
+    scheduler_instance = Scheduler(
+        api=api,
+        today=today,
+        tasks_per_day=config.TASKS_PER_DAY,
+        ignore_tag=config.IGNORE_TASK_TAG,
+    )
 
     logging.info("Getting overdue tasks...")
     overdue_tasks = api.get_tasks(
@@ -27,9 +34,7 @@ def main():
         t for t in overdue_tasks if t.due and t.due.date != today_str
     ]
 
-    scheduler.schedule_and_push_down(
-        api, overdue_tasks, today, config.TASKS_PER_DAY, config.IGNORE_TASK_TAG
-    )
+    scheduler_instance.schedule_and_push_down(overdue_tasks)
 
     logging.info("Scheduling complete.")
 
