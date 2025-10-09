@@ -22,6 +22,8 @@ def main():
         )
 
         today_str = today.strftime("%Y-%m-%d")
+        # filter out tasks that are due today because Todoist has a weird idea
+        # about what overdue means
         overdue_tasks = [
             t for t in overdue_tasks if t.due and t.due.date != today_str
         ]
