@@ -31,7 +31,9 @@ def main():
     # filter out tasks that are due today because Todoist has a weird idea
     # about what overdue means
     overdue_tasks = [
-        t for t in overdue_tasks if t.due and t.due.date != today_str
+        t for t in overdue_tasks if
+          t.due is not None and
+          t.due.date != today_str
     ]
 
     scheduler_instance.schedule_and_push_down(overdue_tasks)
