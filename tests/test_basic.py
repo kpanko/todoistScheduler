@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, call
 from datetime import date, timedelta
 
 from todoist_api_python.models import Task, Due
-from scheduler import Scheduler
+from todoistScheduler.scheduler import Scheduler
 
 # A sentinel object to detect if a keyword argument was provided
 _SENTINEL = object()
